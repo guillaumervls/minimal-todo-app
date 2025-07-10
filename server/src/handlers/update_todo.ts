@@ -1,13 +1,26 @@
 
+import { db } from '../db';
+import { todosTable } from '../db/schema';
 import { type UpdateTodoInput, type Todo } from '../schema';
+import { eq } from 'drizzle-orm';
 
 export const updateTodo = async (input: UpdateTodoInput): Promise<Todo> => {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is updating the completion status of a todo item.
-    return Promise.resolve({
-        id: input.id,
-        text: "Placeholder text", // Will be fetched from DB in real implementation
-        completed: input.completed,
-        created_at: new Date() // Placeholder date
-    } as Todo);
+  try {
+    // Update the todo's completion status
+    const result = await db.update(todosTable)
+      .set({ completed: input.completed })
+      .where(eq(todosTable.id, input.id))
+      .returning()
+      .execute();
+
+    // Check if todo was found and updated
+    if (result.length === 0) {
+      throw new Error(`Todo with id ${input.id} not found`);
+    }
+
+    return result[0];
+  } catch (error) {
+    console.error('Todo update failed:', error);
+    throw error;
+  }
 };
